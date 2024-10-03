@@ -1,0 +1,10 @@
+services:
+  api:
+    build: ./api
+    tty: true
+    stdin_open: true
+    # ports:
+    #   - 8000:8000
+    volumes:
+      - ./api:/api
+    command: /bin/bash
