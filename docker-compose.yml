@@ -3,8 +3,35 @@ services:
     build: ./api
     tty: true
     stdin_open: true
-    # ports:
-    #   - 8000:8000
+    ports:
+      - 3000:3000
     volumes:
       - ./api:/api
+    depends_on:
+      db:
+        condition: service_healthy
     command: /bin/bash
+    # command: /bin/bash -c "poetry run uvicorn src.main:app --host 0.0.0.0 --reload --reload-dir ./src"
+    environment:
+      - DATABASE_URL=postgres://postgres:docker@db:5432/poi
+  db:
+    image: kartoza/postgis:latest
+    platform: linux/amd64
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=docker
+    ports:
+      - 5432:5432
+    tty: true
+    stdin_open: true
+    volumes:
+      # DBにデータを入力するためのボリューム。ダウンロードしてきたデータを格納する。
+      - ./db:/data
+      # DBのデータを永続化するためのボリューム。DBの実体を格納する。
+      - ./db/postgres-data:/var/lib/postgresql
+    healthcheck:
+        interval: 1s
+        timeout: 5s
+        retries: 20
+        test: 'PGPASSWORD=$$POSTGRES_PASSWORD pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1'
